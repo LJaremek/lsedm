@@ -1,0 +1,6 @@
+# Default
+python-dotenv
+
+# Clip
+accelerate
+flash-attn

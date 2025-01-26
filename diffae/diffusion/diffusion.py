@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 
-from base import GaussianDiffusionBeatGansConfig, GaussianDiffusionBeatGans
+from .base import GaussianDiffusionBeatGansConfig, GaussianDiffusionBeatGans
 from model import Model
 
 
