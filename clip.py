@@ -1,55 +1,52 @@
-from transformers import CLIPProcessor, CLIPModel
+from dataclasses import dataclass
+
+from transformers import AutoModel, AutoFeatureExtractor, AutoTokenizer
 import torch
 
 
-def get_clip_with_processor(
-        name: str,
-        implementation: str,
-        device: str
-        ) -> tuple[CLIPModel, CLIPProcessor]:
+@dataclass
+class ClipConfig:
+    model: str
+    processor: str
+    tokenizer: str
+    device: str = "cpu"
 
-    if device == "cuda":
-        torch_dtype = torch.float16
 
-        model = CLIPModel.from_pretrained(
-            name,
-            attn_implementation=implementation,
-            device_map=device,
-            torch_dtype=torch_dtype
-        )
-    else:
-        torch_dtype = torch.float32
+def get_clip(model: str, processor: str, tokenizer: str, device: str) -> tuple:
+    model = AutoModel.from_pretrained(model, trust_remote_code=True).to(device)
+    processor = AutoFeatureExtractor.from_pretrained(processor)
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer)
 
-        model = CLIPModel.from_pretrained(
-            name,
-            device_map={"": device},
-            torch_dtype=torch_dtype
-        )
+    return model, processor, tokenizer
 
-    processor = CLIPProcessor.from_pretrained(name)
 
-    return model, processor
+def get_clip_from_clip_config(config: ClipConfig) -> tuple:
+    model = AutoModel.from_pretrained(
+        config.model, trust_remote_code=True
+        ).to(config.device)
+    processor = AutoFeatureExtractor.from_pretrained(config.processor)
+    tokenizer = AutoTokenizer.from_pretrained(config.tokenizer)
+
+    return model, processor, tokenizer
 
 
 def query_clip(
         image: torch.Tensor,
-        text: list[str],
-        model: CLIPModel,
-        processor: CLIPProcessor,
-        device: str
+        texts: list[str],
+        model,
+        processor,
+        tokenizer
         ) -> list[list[float]]:
 
-    inputs = processor(
-        text=text,
-        images=image,
-        return_tensors="pt",
-        padding=True
-    ).to(device)
+    device = model.device
+    image_input = processor(image, return_tensors="pt").to(device)
+    text_input = tokenizer(texts, return_tensors="pt", padding=True).to(device)
 
-    outputs = model(**inputs)
+    with torch.no_grad():
+        outputs = model(**image_input, **text_input)
+        text_probs = outputs.logits_per_image.softmax(dim=-1)
 
-    logits_per_image = outputs.logits_per_image
-    return logits_per_image.softmax(dim=-1).tolist()
+        return text_probs
 
 
 def get_top_n_indices(numbers: list[float], n: int) -> list[int]:
@@ -61,3 +58,11 @@ def get_top_n_indices(numbers: list[float], n: int) -> list[int]:
         key=lambda i: numbers[i],
         reverse=True
     )[:n]
+
+
+class CLIPS:
+    laion5b_roberta = ClipConfig(
+        "calpt/CLIP-ViT-B-32-xlm-roberta-base-laion5B-s13B-b90k",
+        "laion/CLIP-ViT-B-32-laion2B-s34B-b79K",
+        "xlm-roberta-base"
+    )

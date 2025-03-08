@@ -13,15 +13,15 @@ from tqdm import tqdm
 import numpy as np
 import torch
 
-from ..renderer import render_condition, render_uncondition
-from ..lmdb_writer import LMDBImageWriter, nullcontext
-from ..metrics import evaluate_fid, evaluate_lpips
-from ..choices import TrainMode, OptimizerType
+from renderer import render_condition, render_uncondition
+from lmdb_writer import LMDBImageWriter, nullcontext
+from metrics import evaluate_fid, evaluate_lpips
+from choices import TrainMode, OptimizerType
 from .unet_autoenc import BeatGANsAutoencModel
-from ..dist_utils import get_world_size
-from ..dataset import make_transform
-from ..config import TrainConfig
-from ..dataset import CelebAlmdb
+from dist_utils import get_world_size
+from dataset import make_transform
+from config import TrainConfig
+from dataset import CelebAlmdb
 
 
 class WarmupLR:

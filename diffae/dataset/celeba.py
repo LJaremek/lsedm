@@ -427,7 +427,8 @@ class CelebADataset:
             self,
             data_path: str,
             labels_path: str,
-            image_size: int = 178
+            image_size: int = 178,
+            images_limit: int | None = None
             ) -> None:
         self.path = Path(data_path)
         self.transform = transforms.Compose([
@@ -435,7 +436,9 @@ class CelebADataset:
             transforms.ToTensor()
         ])
 
-        self.labels_df = pd.read_csv(labels_path, delimiter=",")
+        self.labels_df = pd.read_csv(
+            labels_path, delimiter=",", nrows=images_limit
+            )
         self.labels_df["path"] = self.labels_df["image_id"].apply(
             lambda x: str(self.path / x.split(".")[0].lstrip("0") / "img.png")
         )
@@ -446,13 +449,13 @@ class CelebADataset:
     def __getitem__(self, idx: int) -> tuple:
         row = self.labels_df.iloc[idx]
         image_path = row["path"]
-        image_id = row["image_id"]
+        image_name = row["image_id"]
         labels = row.drop(["image_id", "path"]).values.astype(float)
 
-        image = Image.open(image_path).convert("RGB")
-        image = self.transform(image)
+        image = Image.open(image_path)
+        # image = self.transform(image)
 
-        return image, labels, image_id
+        return image, labels, image_name
 
     def __len__(self) -> int:
         return self.length

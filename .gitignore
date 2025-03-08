@@ -1,3 +1,4 @@
 # Default
 .vscode/
 __pycache__/
+.env

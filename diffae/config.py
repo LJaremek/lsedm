@@ -9,7 +9,7 @@ from typing import Tuple
 from torch.utils.data import DataLoader
 
 from config_base import BaseConfig
-from dataset import FFHQlmdb, Horse_lmdb, CelebAlmdb
+from dataset import FFHQlmdb, Horse_lmdb, CelebAlmdb, ImageNet
 from diffusion import SpacedDiffusionBeatGansConfig
 from diffusion.base import (
     GenerativeType, LossType, ModelMeanType, ModelVarType,
@@ -315,6 +315,10 @@ class TrainConfig(BaseConfig):
                               original_resolution=None,
                               crop_d2c=True,
                               **kwargs)
+        elif self.data_name == "imagenet":
+            return ImageNet(
+                self.split, self.classes, self.n_samples, self.cache_dir
+                )
         else:
             raise NotImplementedError()
 
